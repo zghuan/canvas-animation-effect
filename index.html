@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="MobileOptimized" content="width">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no">
+  <title>canvas配置</title>
+  <style type="text/css">
+  *{
+    padding:0;margin:0;
+}
+body{
+  position: relative;
+}
+.flex-center{
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+}
+.flex-space{
+    display: flex;
+    justify-content: space-between;
+}
+#canvas{
+  display: block;
+  background: #000;
+}
+#modal{
+  position: absolute;
+  right: 5%;
+  top: 5%;
+  width: 240px;
+  height: auto;
+  color:#fff;
+  border:1px solid #fff;
+  background: rgba(0,0,0,0.2);
+}
+.box{
+  padding: 0 5px;
+  cursor: pointer;
+}
+#title{
+  text-align: center;
+  user-select:none
+}
+.fill{
+    cursor: pointer;
+}
+i{
+    color:red;
+}
+input{
+    width: 100px;
+}
+#open{
+    display: none;
+}
+</style>
+</head>
+<body>
+  <canvas id="canvas">您的浏览器不支持HTML5 canvas，请换一个浏览器。</canvas>
+  <div id="modal">
+    <div class="box">
+        <div id="title" onclick="openConfig()">参数配置</div>
+        <div id="open">
+        <div class="flex-center">
+          <span>min宽(<i id="minw">5</i>)：</span>
+          2<input  type="range" value="5" min="2" max="10" onchange="config(this,'minw')"></input>10
+        </div>
+        <div class="flex-center">
+          <span>max宽(<i id="maxw">5</i>)：</span>
+          2<input  type="range" value="5" min="2" max="10" onchange="config(this,'maxw')"></input>10
+        </div>
+
+        <div class="flex-center">
+          <span>min高(<i id="minh">5</i>)：</span>
+          2<input  type="range" value="5" min="2" max="10" onchange="config(this,'minh')"></input>10
+        </div>
+         <div class="flex-center">
+          <span>max高(<i id="maxh">5</i>)：</span>
+          2<input  type="range" value="5" min="2" max="10" onchange="config(this,'maxh')"></input>10
+        </div>
+
+        <div class="flex-center">
+          <span>minvx(<i id="minvx">-2</i>)：</span>
+          -10<input  type="range" value="2" min="-10" max="10" onchange="config(this,'minvx')"></input>10
+        </div>
+       <div class="flex-center">
+          <span>maxvx(<i id="maxvx">2</i>)：</span>
+          -10<input  type="range" value="2" min="-10" max="10" onchange="config(this,'maxvx')"></input>10
+        </div>
+        <div class="flex-center">
+          <span>minvy(<i id="minvy">-2</i>)：</span>
+          -10<input  type="range" value="2" min="-10" max="10" onchange="config(this,'minvy')"></input>10
+        </div>
+       <div class="flex-center">
+          <span>maxvy(<i id="maxvy">2</i>)：</span>
+          -10<input  type="range" value="2" min="-10" max="10" onchange="config(this,'maxvy')"></input>10
+        </div>
+         <div class="flex-center">
+          <span>数量：</span>
+          <input id="number" type="number" value="1" min="1" max="1000"></input>
+        </div>
+           <div class="flex-center flex-space">
+            <div>
+                   <button class="btn" onclick="start()">开始</button>
+              <button class="btn" onclick="stop()">暂停</button>
+              <button class="btn" onclick="clearRect()">清空</button>
+            </div>
+             <div class="fill" >
+                   <label for="radio">填充</label> 
+                   <input type="radio" style="width:25px" id="radio">
+             </div>
+                <div class="fill">
+                   <label for="radio">阴影</label> 
+                   <input type="radio" style="width:25px" id="shadow">
+             </div>
+          </div>
+    </div>
+    </div>
+  </div>
+</body>
+<script>
+    function $(id){
+        return document.getElementById(id)
+    }
+</script>
+<script type="text/javascript">
+  /*
+    可配置的canvas，目前只有方形，后续会补上各种形状
+    注意:开始的时候，必须先点击清空按钮清空当前的画布。
+  */
+window.onload = function(){
+    position()
+}
+    var canvas = $('canvas'),
+    ctx  = canvas.getContext('2d'),
+    w = canvas.width = window.innerWidth,
+    h = canvas.height = window.innerHeight,
+    arr = [], // 实例化数组
+    num = $('number').value
+    mark = false, //start，stop状态
+    check = false,//填充
+    shadow = false,//阴影
+    zgh = null, // 动画开关
+    clickFlag  = false // 拖动点击判断
+    window.onresize = function(){
+        position()
+        w = canvas.width = window.innerWidth
+        h = canvas.height =  window.innerHeight
+    }
+    function random(min,max){
+      return Math.random()*(max-min)+min
+    }
+    //创建对象
+    function Flag(){}
+    Flag.prototype = {
+        //初始化旗子
+        init:function(obj){
+            this.w = random(obj.minw,obj.maxw)
+            this.h = random(obj.minh,obj.maxh)
+          	this.x = random(0,w)
+            this.y = random(0,h) 
+            this.vx = random(obj.minvx,obj.maxvx)
+            this.vy = random(obj.minvy,obj.maxvy)
+            this.color = '#'+Math.floor(Math.random()*0xffffff).toString(16) // 随机色
+        },
+        //绘画旗子
+        draw:function(check,shadow){
+            ctx.beginPath();
+            ctx.rect(this.x,this.y,this.w,this.h);
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+            if(shadow){
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = '#fff';
+            }else{
+                ctx.shadowBlur = 0;
+            }
+            if(check){
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            } 
+        },
+      //旗子移动
+        move:function(){
+            this.x += this.vx // x坐标随着速度变化
+            this.y += this.vy // y坐标随着速度变化
+            if(this.x + this.w >= w || this.x - this.w/2 <=0){
+                this.vx = -this.vx
+            }
+            if(this.y + this.h >= h || this.y - this.h/2 <=0){
+                this.vy = -this.vy
+            } 
+            this.draw(check,shadow)
+        }
+    }
+    const obj = {
+        num:Number(num),
+        minw:Number($('minw').innerHTML),
+        maxw:Number($('maxw').innerHTML),
+        minh:Number($('minh').innerHTML),
+        maxh:Number($('maxh').innerHTML),
+        minvx:Number($('minvx').innerHTML),
+        maxvx:Number($('maxvx').innerHTML),
+        maxvy:Number($('maxvy').innerHTML),
+        minvy:Number($('minvy').innerHTML),
+        animate:function(){
+            requestAnimationFrame(animate)
+        }
+    }
+    loop(obj)
+    function loop(obj){
+        obj.animate()
+        for(var i =0;i<obj.num;i++){
+            var flag = new Flag()
+            arr.push(flag)
+            flag.init(obj)
+            flag.draw(check,shadow)
+        }  
+    }
+    function animate(){ 
+        mark = true
+        ctx.clearRect(0,0,w,h);
+          for(var i of arr){
+            i.move(check,shadow)
+        }
+        zgh = requestAnimationFrame(animate)
+    }
+// 选择参数
+    function config(e,id){
+        $(id).innerHTML = e.value
+        let a = $(id).id
+        obj[a] = Number(e.value)
+        //console.log(obj)
+    }
+// 增加阴影
+   !(function(){
+        var shadows = $('shadow')
+        shadows.onclick = function(){
+            if(shadow){
+                shadows.checked = false;
+            }else{
+                shadows.checked = true;
+            }
+            shadow = !shadow
+        }
+    })()
+// 填充元素
+   ~(function(){
+        var radio = $('radio')
+        radio.onclick = function(){
+            if(check){
+                radio.checked = false;
+            }else{
+                radio.checked = true;
+            }
+            check = !check
+        }
+    })()
+
+// 开始
+    function start(){
+        if ($('number').value>1000){
+            alert('数量太多啦，不能超过1000')
+        }else{
+            if(mark == false){
+                obj.animate()
+            }
+            if(mark == 'new'){
+                obj.num = Number($('number').value)
+                //console.log(obj)
+                loop(obj)
+            }
+        }
+    }
+// 暂停
+   function stop(){
+    if(mark == true){
+        cancelAnimationFrame(zgh)
+        mark = false
+        }
+   }
+// 清空
+    function clearRect(){
+        cancelAnimationFrame(zgh)
+         ctx.clearRect(0,0,w,h)
+         arr = []
+         mark = 'new'
+    }
+// 展开配置
+    function openConfig(){
+        //console.log(clickFlag)
+        if(clickFlag){
+            $('open').style.display == 'block'?$('open').style.display='none':$('open').style.display = 'block'
+        }
+    }
+// 拖动定位
+    function position(){
+        var div1 = $('modal');
+        var x1,x2,y1,y2,d
+    　　div1.onmousedown = function(ev){
+    　　　　var oevent = ev || event;
+    　　　　var distanceX = oevent.clientX - div1.offsetLeft;
+    　　　　var distanceY = oevent.clientY - div1.offsetTop;
+            x1 = ev.clientX;
+            y1 = ev.clientY;
+    　　　　document.onmousemove = function(ev){
+    　　　　　　var oevent = ev || event;
+                let left = oevent.clientX - distanceX
+                let top = oevent.clientY - distanceY
+                left<=0 && (left = 0); //防止左溢出
+                top<=0 && (top = 0);   //防止上溢出
+                //console.log(left,div1.offsetWidth,w)
+                left>=(w - div1.offsetWidth) && (left = w - div1.offsetWidth)
+                top >=(h - div1.offsetHeight) && (top = h - div1.offsetHeight)
+    　　　　　　div1.style.left = left + 'px';
+    　　　　　　div1.style.top = top + 'px'; 
+    　　　　};
+    　　　　document.onmouseup = function(e){
+                x2 = e.clientX;
+                y2 = e.clientY;
+    　　　　　　document.onmousemove = null;
+    　　　　　　document.onmouseup = null;
+                d = Math.sqrt((x1-x2)*(x1-x2)) + Math.sqrt((y1-y2)*(y1-y2))
+                if(0<=d&&d<7){
+                    clickFlag = true
+                }else{
+                    clickFlag = false
+                }
+                //console.log(d,clickFlag)
+    　　　　}
+        }
+    }
+</script>
+
+
+</html>
