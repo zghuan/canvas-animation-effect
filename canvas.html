@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="format-detection" content="telephone=no">
-  <title>canvas配置</title>
+  <title>动画配置</title>
   <style type="text/css">
   *{
     padding:0;margin:0;
@@ -129,12 +129,9 @@ input{
     }
 </script>
 <script type="text/javascript">
-  /*
-    可配置的canvas，目前只有方形，后续会补上各种形状
-    注意:开始的时候，必须先点击清空按钮清空当前的画布。
-  */
 window.onload = function(){
     position()
+    // canvas.addEventListener('mousemove', MouseMove, false);
 }
     var canvas = $('canvas'),
     ctx  = canvas.getContext('2d'),
@@ -172,7 +169,7 @@ window.onload = function(){
         draw:function(check,shadow){
             ctx.beginPath();
             ctx.rect(this.x,this.y,this.w,this.h);
-            ctx.strokeStyle = '#fff';
+            ctx.strokeStyle = this.color;
             ctx.stroke();
             if(shadow){
                 ctx.shadowBlur = 5;
@@ -277,11 +274,15 @@ window.onload = function(){
             }
         }
     }
+// 鼠标移入放大
+    function MouseMove (e) {
+      console.log(e)
+    } 
 // 暂停
-   function stop(){
-    if(mark == true){
-        cancelAnimationFrame(zgh)
-        mark = false
+    function stop(){
+      if(mark == true){
+          cancelAnimationFrame(zgh)
+          mark = false
         }
    }
 // 清空
@@ -303,12 +304,14 @@ window.onload = function(){
         var div1 = $('modal');
         var x1,x2,y1,y2,d
     　　div1.onmousedown = function(ev){
+            console.log()
     　　　　var oevent = ev || event;
     　　　　var distanceX = oevent.clientX - div1.offsetLeft;
     　　　　var distanceY = oevent.clientY - div1.offsetTop;
             x1 = ev.clientX;
             y1 = ev.clientY;
-    　　　　document.onmousemove = function(ev){
+            if(ev.target.nodeName.toLowerCase() != 'input'){
+              document.onmousemove = function(ev){
     　　　　　　var oevent = ev || event;
                 let left = oevent.clientX - distanceX
                 let top = oevent.clientY - distanceY
@@ -319,7 +322,8 @@ window.onload = function(){
                 top >=(h - div1.offsetHeight) && (top = h - div1.offsetHeight)
     　　　　　　div1.style.left = left + 'px';
     　　　　　　div1.style.top = top + 'px'; 
-    　　　　};
+    　　　　  }
+            }
     　　　　document.onmouseup = function(e){
                 x2 = e.clientX;
                 y2 = e.clientY;
