@@ -32,7 +32,7 @@ body{
   position: absolute;
   right: 5%;
   top: 5%;
-  width: 240px;
+  width: 250px;
   height: auto;
   color:#fff;
   border:1px solid #fff;
@@ -57,6 +57,9 @@ input{
 }
 #open{
     display: none;
+}
+#number{
+    width: 50px;
 }
 </style>
 </head>
@@ -100,24 +103,53 @@ input{
           <span>maxvy(<i id="maxvy">2</i>)：</span>
           -10<input  type="range" value="2" min="-10" max="10" onchange="config(this,'maxvy')"></input>10
         </div>
-         <div class="flex-center">
-          <span>数量：</span>
-          <input id="number" type="number" value="1" min="1" max="1000"></input>
+        
+        <div class="flex-center">
+        <div class="fill">
+            <label for="rect">
+                <input type="radio" name="shape" checked style="width:25px" id="rect" onchange="changeShape(this)">矩形
+            </label>
+        </div>
+        <div class="fill">
+            <label for="circle">
+                <input type="radio" name="shape" style="width:25px" id="circle" onchange="changeShape(this)">圆形
+            </label> 
+        </div>
+        <div class="fill">
+            <label for="triangle">
+                <input type="radio" name="shape" style="width:25px" id="triangle" onchange="changeShape(this)">三角
+            </label> 
+        </div>
+        <div class="fill">
+            <label for="triangle">
+                <input type="radio" name="shape" style="width:25px" id="triangle" onchange="changeShape(this)">待定
+            </label> 
+        </div>
+        </div>
+        <div class="flex-center">
+            <div class="fill" >
+                <label for="radio"><input type="radio" style="width:25px" id="radio">填充</label> 
+            </div>
+            <div class="fill">
+                <label for="shadow"><input type="radio" style="width:25px" id="shadow">阴影</label> 
+            </div>
+            <div class="fill">
+                <label for="line"><input type="radio" style="width:25px" id="line">连线</label> 
+            </div>
+            <div class="fill">
+                <label for="mouse"><input type="radio" style="width:25px" id="mouse">鼠标</label> 
+            </div>
         </div>
            <div class="flex-center flex-space">
             <div>
-                   <button class="btn" onclick="start()">开始</button>
-              <button class="btn" onclick="stop()">暂停</button>
-              <button class="btn" onclick="clearRect()">清空</button>
+                <span>数量：</span>
+                <input id="number" type="number" value="1" min="1" max="1000"></input>
             </div>
-             <div class="fill" >
-                   <label for="radio">填充</label> 
-                   <input type="radio" style="width:25px" id="radio">
-             </div>
-                <div class="fill">
-                   <label for="radio">阴影</label> 
-                   <input type="radio" style="width:25px" id="shadow">
-             </div>
+            <div>
+                <button class="btn" onclick="start()">开始</button>
+                <button class="btn" onclick="stop()">暂停</button>
+                <button class="btn" onclick="clearRect()">清空</button>
+            </div>
           </div>
     </div>
     </div>
@@ -131,9 +163,10 @@ input{
 <script type="text/javascript">
 window.onload = function(){
     position()
-    // canvas.addEventListener('mousemove', MouseMove, false);
+    canvas.addEventListener('mousemove', MouseMove, false);
 }
     var canvas = $('canvas'),
+    mouse = { x: 0, y: 0}, // 鼠标移动的坐标
     ctx  = canvas.getContext('2d'),
     w = canvas.width = window.innerWidth,
     h = canvas.height = window.innerHeight,
@@ -142,6 +175,9 @@ window.onload = function(){
     mark = false, //start，stop状态
     check = false,//填充
     shadow = false,//阴影
+    lines = false,// 连线
+    mouses = false,// 鼠标功能开启
+    shape = 'triangle', // 形状
     zgh = null, // 动画开关
     clickFlag  = false // 拖动点击判断
     window.onresize = function(){
@@ -168,7 +204,16 @@ window.onload = function(){
         //绘画旗子
         draw:function(check,shadow){
             ctx.beginPath();
-            ctx.rect(this.x,this.y,this.w,this.h);
+            if (shape == 'rect') {
+                ctx.rect(this.x,this.y,this.w,this.h);
+            }else if(shape == 'circle'){
+                ctx.arc(this.x, this.y, this.w/2, 0, Math.PI * 2, true);
+            }else{
+                ctx.moveTo(this.x,this.y)
+                ctx.lineTo(this.x*1.1,this.y*1.1)
+                ctx.lineTo(this.x,this.y*1.2)
+                ctx.closePath()
+            }
             ctx.strokeStyle = this.color;
             ctx.stroke();
             if(shadow){
@@ -180,7 +225,8 @@ window.onload = function(){
             if(check){
                 ctx.fillStyle = this.color;
                 ctx.fill();
-            } 
+            }
+
         },
       //旗子移动
         move:function(){
@@ -225,14 +271,45 @@ window.onload = function(){
           for(var i of arr){
             i.move(check,shadow)
         }
+        if(lines){
+            range(arr, 100)
+        }
+        if(mouses){
+            mouseing(arr, 100)
+        }
         zgh = requestAnimationFrame(animate)
+    }
+// 画线
+    function range (arr,range) {
+        for(let i = 0; i < arr.length; i++) {
+            for(let j =0; j< arr.length;j++) {
+                if (arr[i].x - arr[j].x < range && arr[j].x - arr[i].x < range && arr[i].y - arr[j].y < range && arr[j].y - arr[i].y <range ) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = arr[i].color
+                    ctx.moveTo(arr[i].x, arr[i].y);
+                    ctx.lineTo(arr[j].x, arr[j].y);
+                    ctx.stroke();
+                    ctx.closePath();
+                }
+            }    
+        }
+    }
+// 鼠标功能
+    function mouseing (arr,range) {
+        for(let i = 0; i < arr.length; i++) {
+            ctx.beginPath();
+            ctx.strokeStyle = arr[i].color
+            ctx.moveTo(mouse.x, mouse.y);
+            ctx.lineTo(arr[i].x, arr[i].y);
+            ctx.stroke();
+            ctx.closePath();
+        }
     }
 // 选择参数
     function config(e,id){
         $(id).innerHTML = e.value
         let a = $(id).id
         obj[a] = Number(e.value)
-        //console.log(obj)
     }
 // 增加阴影
    !(function(){
@@ -258,7 +335,36 @@ window.onload = function(){
             check = !check
         }
     })()
-
+// 元素连线
+   !(function(){
+        var line = $('line')
+        line.onclick = function(){
+            if(lines){
+                line.checked = false;
+            }else{
+                line.checked = true;
+            }
+            lines = !lines
+        }
+    })()
+// 鼠标功能
+   !(function(){
+        var mouse = $('mouse')
+        mouse.onclick = function(){
+            if(mouses){
+                mouse.checked = false;
+            }else{
+                mouse.checked = true;
+            }
+            mouses = !mouses
+        }
+    })()
+// 改变形状
+    function changeShape(el){
+        shape = el.id
+        return shape
+    }
+    // console.log(changeShape({id:'rect'}))
 // 开始
     function start(){
         if ($('number').value>1000){
@@ -272,11 +378,18 @@ window.onload = function(){
                 //console.log(obj)
                 loop(obj)
             }
+            // if(mark == true){
+            //     obj.num = Number($('number').value)
+            //     ctx.clearRect(0,0,w,h)
+            //     loop(obj)
+            // }
         }
     }
-// 鼠标移入放大
+// 鼠标移入坐标
     function MouseMove (e) {
-      console.log(e)
+     // console.log(e)
+      mouse.x = e.layerX
+      mouse.y = e.layerY 
     } 
 // 暂停
     function stop(){
@@ -317,7 +430,6 @@ window.onload = function(){
                 let top = oevent.clientY - distanceY
                 left<=0 && (left = 0); //防止左溢出
                 top<=0 && (top = 0);   //防止上溢出
-                //console.log(left,div1.offsetWidth,w)
                 left>=(w - div1.offsetWidth) && (left = w - div1.offsetWidth)
                 top >=(h - div1.offsetHeight) && (top = h - div1.offsetHeight)
     　　　　　　div1.style.left = left + 'px';
@@ -335,10 +447,11 @@ window.onload = function(){
                 }else{
                     clickFlag = false
                 }
-                //console.log(d,clickFlag)
     　　　　}
         }
     }
+
+
 </script>
 
 
