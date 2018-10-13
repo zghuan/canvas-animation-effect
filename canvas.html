@@ -107,7 +107,7 @@ input{
         <div class="flex-center">
         <div class="fill">
             <label for="rect">
-                <input type="radio" name="shape" checked style="width:25px" id="rect" onchange="changeShape(this)">矩形
+                <input type="radio" name="shape"  style="width:25px" id="rect" onchange="changeShape(this)">矩形
             </label>
         </div>
         <div class="fill">
@@ -121,8 +121,8 @@ input{
             </label> 
         </div>
         <div class="fill">
-            <label for="triangle">
-                <input type="radio" name="shape" style="width:25px" id="triangle" onchange="changeShape(this)">待定
+            <label for="letter">
+                <input type="radio" name="shape" checked style="width:25px" id="letter" onchange="changeShape(this)">字母
             </label> 
         </div>
         </div>
@@ -177,7 +177,7 @@ window.onload = function(){
     shadow = false,//阴影
     lines = false,// 连线
     mouses = false,// 鼠标功能开启
-    shape = 'triangle', // 形状
+    shape = 'letter', // 形状
     zgh = null, // 动画开关
     clickFlag  = false // 拖动点击判断
     window.onresize = function(){
@@ -200,6 +200,8 @@ window.onload = function(){
             this.vx = random(obj.minvx,obj.maxvx)
             this.vy = random(obj.minvy,obj.maxvy)
             this.color = '#'+Math.floor(Math.random()*0xffffff).toString(16) // 随机色
+            this.letter = 'QWERTYUIOPASDFGHJKLZXCVBNM'
+            this.resultLetter = this.letter[Math.floor(random(0,26))]
         },
         //绘画旗子
         draw:function(check,shadow){
@@ -208,11 +210,15 @@ window.onload = function(){
                 ctx.rect(this.x,this.y,this.w,this.h);
             }else if(shape == 'circle'){
                 ctx.arc(this.x, this.y, this.w/2, 0, Math.PI * 2, true);
-            }else{
+            }else if(shape == 'triangle'){
                 ctx.moveTo(this.x,this.y)
-                ctx.lineTo(this.x*1.1,this.y*1.1)
-                ctx.lineTo(this.x,this.y*1.2)
+                ctx.lineTo(this.x+10,this.y)
+                ctx.lineTo(this.x,this.y+10)
                 ctx.closePath()
+            }else{
+                // 字母
+                ctx.font = '30px Times New Roman';
+                ctx.strokeText(this.resultLetter,this.x,this.y);
             }
             ctx.strokeStyle = this.color;
             ctx.stroke();
@@ -223,6 +229,9 @@ window.onload = function(){
                 ctx.shadowBlur = 0;
             }
             if(check){
+                if(shape == 'letter'){
+                    ctx.fillText(this.resultLetter,this.x,this.y)
+                }
                 ctx.fillStyle = this.color;
                 ctx.fill();
             }
@@ -298,7 +307,7 @@ window.onload = function(){
     function mouseing (arr,range) {
         for(let i = 0; i < arr.length; i++) {
             ctx.beginPath();
-            ctx.strokeStyle = arr[i].color
+            ctx.strokeStyle = 'gray'; //arr[i].color
             ctx.moveTo(mouse.x, mouse.y);
             ctx.lineTo(arr[i].x, arr[i].y);
             ctx.stroke();
