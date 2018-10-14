@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+  <meta name="MobileOptimized" content="width">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no">
+  <title>喷射彩带</title>
+<style>
+	*{
+		margin:0;
+		padding:0;
+	}
+	canvas{
+		width: 100%;
+		height: 100%;
+		background: #000;
+		display: block;
+	}
+    .image{
+        position: absolute;
+        left: 0;right: 0;
+        bottom: 30px;
+        margin: auto;
+        width: 100px;
+        height: 100px;
+    }
+</style>
+</head>
+<body>
+    <canvas id="canvas">该浏览器不支持canvas标签，换浏览器喔！</canvas>
+    <img src="image/icecream.png" alt="" class="image" id="image">
+</body>
+<script>
+    var w = null,
+    h = null,
+    mouse = {x:0,y:0}, // 鼠标位置
+    iceArray = [],
+    timer = null,
+    times = null,
+    cshadow = false, // 是否有残影
+    mark = false, // 定时器状态
+    canvas = document.getElementById('canvas'),
+    image = document.getElementById('image'),
+    ctx = canvas.getContext('2d');
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight
+
+    window.onresize = function () {
+        w = canvas.width = window.innerWidth
+        h = canvas.height =  window.innerHeight
+    }
+    canvas.addEventListener('mousemove',function(e) {
+        mouse.x = e.layerX
+        mouse.y = e.layerY
+        imageRotate(mouse.x,mouse.y)
+    })
+    canvas.addEventListener('mousedown',function(e) {
+        console.log('开始喷射')
+        times = setInterval(function() { 
+            createNum(10)
+        }, 60) 
+        if(mark == false){
+            animate()
+        }
+    })
+    canvas.addEventListener('mouseup',function(e) {
+       console.log('结束喷射')
+       // cancelAnimationFrame(timer)
+       clearInterval(times)
+       mark = true
+    })
+    // class类创建彩带对象
+    class Icecream {
+        // 初始化
+        constructor(obj){
+            this.x = obj.x 
+            this.y = obj.y
+            this.w = obj.w
+            this.h = obj.h
+            this.vx = obj.vx
+            this.vy = obj.vy
+            this.color = obj.color
+        }
+        // 画彩带
+        draw(){
+            ctx.beginPath()
+            ctx.fillRect(this.x,this.y,this.w,this.h)
+            if(!cshadow){
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.color
+            }
+            ctx.fillStyle = this.color
+        }
+        // 彩带移动
+        move(){
+            this.x -= this.vx 
+            this.y -= this.vy
+            this.y *= 0.98
+            this.draw()
+        }
+    }
+    
+    function createNum (num) {
+        for (var i = 0 ; i < num; i++) {
+             var ice = new Icecream({
+                x:w/2,
+                y:h - 120,
+                w:random(5,8),
+                h:random(5,50),
+                vx:random(-5,5),
+                vy:random(5,15),
+                color:'#'+Math.floor(Math.random()*0xffffff).toString(16) // 随机色
+            })
+            iceArray.push(ice)
+        }
+    }
+    function animate () {
+        if(cshadow){
+            ctx.fillStyle = 'rgba(0,0,0,0.1)'; //每一帧都填充背景色
+            ctx.fillRect(0,0,w,h);
+        }else{
+            ctx.clearRect(0,0,w,h);
+        }
+        for (var j = 0 ; j < iceArray.length; j++) {
+            iceArray[j].move()
+        }
+        timer = requestAnimationFrame(animate)
+    }
+    
+    /* 随机数封装
+     从min~ max的随机数
+    */
+    function random(min,max){
+      return Math.random()*(max-min)+min
+    }
+    // 雪糕筒旋转
+    function imageRotate (x,y) {
+        image.style.transform = 'rotate('+ getAngle(w/2,h,x,y) +'deg)'
+        //let xx = 10 * Math.cos(getAngle(w/2,h,x,y)),
+        //   yy = 10 * Math.sin(getAngle(w/2,h,x,y))
+       // console.log(xx,yy)
+    }
+    /*获取夹角角度
+    @param {px,py} 中心点x,y坐标
+    @param {mx,my} 鼠标x,y坐标
+
+    */
+    function getAngle(px,py,mx,my){
+        var x = Math.abs(px-mx);
+        var y = Math.abs(py-my);
+        var z = Math.sqrt(Math.pow(x,2)+Math.pow(y,2));
+        var cos = y/z;
+        var radina = Math.acos(cos);//用反三角函数求弧度
+        var angle = Math.floor(180/(Math.PI/radina));//将弧度转换成角度
+
+        if(mx>px&&my>py){//鼠标在第四象限
+            angle = 180 - angle;
+        }
+        if(mx==px&&my>py){//鼠标在y轴负方向上
+            angle = 180;
+        }
+        if(mx>px&&my==py){//鼠标在x轴正方向上
+            angle = 90;
+        }
+        if(mx<px&&my>py){//鼠标在第三象限
+            angle = 180+angle;
+        }
+        if(mx<px&&my==py){//鼠标在x轴负方向
+            angle = 270;
+        }
+        if(mx<px&&my<py){//鼠标在第二象限
+            angle = 360 - angle;
+        }
+        return angle;
+    }
+    window.requestAnimFrame = (function () {
+        return window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            function (callback) {
+                window.setTimeout(callback, 1000 / 60);
+            };
+    })();
+    </script> 
+    
+</html>
