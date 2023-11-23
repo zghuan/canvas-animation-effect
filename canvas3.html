@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="MobileOptimized" content="width">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no">
+  <title>动画配置</title>
+  <style type="text/css">
+    * {
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      position: relative;
+    }
+
+    .flex-center {
+      display: flex;
+      align-items: center;
+      padding: 5px 0;
+    }
+
+    .flex-space {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #canvas {
+      display: block;
+      background: #000;
+    }
+
+    .box {
+      padding: 0 5px;
+      cursor: pointer;
+    }
+
+    #title {
+      text-align: center;
+      user-select: none
+    }
+
+    .fill {
+      cursor: pointer;
+    }
+
+    i {
+      color: red;
+    }
+
+    input {
+      width: 100px;
+    }
+
+    #open {
+      display: none;
+    }
+
+    #number {
+      width: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas">您的浏览器不支持HTML5 canvas，请换一个浏览器。</canvas>
+</body>
+<script>
+  function $(id) {
+    return document.getElementById(id)
+  }
+</script>
+<script type="text/javascript">
+  var canvas = $('canvas'),
+    ctx = canvas.getContext('2d'),
+    w = canvas.width = window.innerWidth,
+    h = canvas.height = window.innerHeight,
+    arr = [], // 实例化数组
+    num = 3,
+    circles = [],
+    timer = null,
+    opacity = 1,
+    open = null // 动画开关
+  window.onresize = function () {
+    w = canvas.width = window.innerWidth
+    h = canvas.height = window.innerHeight
+  }
+  function random(min, max) {
+    return Math.random() * (max - min) + min
+  }
+  //创建对象
+  function Flag() { }
+  Flag.prototype = {
+    //初始化
+    init: function () {
+      this.w = 2
+      this.h = 2
+      this.x = random(0, w)
+      this.y = random(h - 400, h)
+      this.vx = random(-0.5, 0.5)
+      this.vy = 2
+      this.opacity = 1
+      this.color = 255
+    },
+    //绘画
+    draw: function () {
+      this.opacity -= 0.01
+      this.color -= 3
+      ctx.beginPath();
+      ctx.save()
+
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = '#fff'
+
+
+      ctx.arc(this.x, this.y, this.w / 2, 0, Math.PI * 2, true);
+      ctx.strokeStyle = `rgba(230,${this.color},43,${this.opacity})`
+      ctx.stroke();
+
+      ctx.fillStyle = `rgba(230, ${this.color}, 43, ${this.opacity})`
+      ctx.fill();
+
+      ctx.restore();
+    },
+    //移动
+    move: function () {
+      this.x += this.vx // x坐标随着速度变化
+      this.y -= this.vy // y坐标随着速度变化
+
+      if (this.y <= 200) {
+        this.vx = 0
+        this.vy = 0
+        ctx.clearRect(0, 0, w, h - 500)
+      }
+      this.draw()
+    },
+  }
+  setInterval(() => {
+    loop()
+  }, 100)
+  // 开始执行
+  requestAnimationFrame(animate)
+
+  setInterval(() => {
+    arr.splice(0, arr.length / 2)
+    console.log(arr.length, 123)
+  }, 2000)
+
+  function loop() {
+    opacity = 1
+
+    for (var i = 0; i < num; i++) {
+      var flag = new Flag()
+      arr.push(flag)
+      flag.init()
+      flag.draw()
+
+    }
+  }
+  function animate() {
+    ctx.clearRect(0, 0, w, h);
+    for (var i of arr) {
+      i.move()
+    }
+    open = requestAnimationFrame(animate)
+  }
+
+
+</script>
+
+
+</html>
